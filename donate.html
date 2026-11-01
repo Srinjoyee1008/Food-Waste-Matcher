@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Post a donation | Food Waste Matcher{% endblock %}
+{% block content %}
+<section class="form-page">
+  <div class="form-intro">
+    <p class="eyebrow">FOR RESTAURANTS, EVENTS &amp; NEIGHBORS</p>
+    <h1>Share what's<br><em>still good.</em></h1>
+    <p>Tell nearby community organizations what you have, how much, and where to collect it.</p>
+    <div class="form-aside"><span class="aside-mark" aria-hidden="true">01</span><p>Listings stay visible until pickup time, so NGOs can quickly find what works for them.</p></div>
+  </div>
+  <form class="form-panel" method="post" action="{{ url_for('donate') }}">
+    <div class="form-section-title"><span>01</span><h2>About the food</h2></div>
+    <label class="field-label" for="donor_name">Your name or organization</label>
+    <input id="donor_name" name="donor_name" type="text" autocomplete="organization" maxlength="120" required value="{{ form.get('donor_name', '') }}" placeholder="e.g. Green Leaf Kitchen">
+
+    <label class="field-label" for="donor_type">Type of donor</label>
+    <select id="donor_type" name="donor_type" required>
+      <option value="" disabled {% if not form.get('donor_type') %}selected{% endif %}>Choose one</option>
+      {% for key, label in types.items() %}<option value="{{ key }}" {% if form.get('donor_type') == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+
+    <label class="field-label" for="food">What food is available?</label>
+    <textarea id="food" name="food" rows="3" maxlength="300" required placeholder="Include useful details like vegetarian, packed, or chilled">{{ form.get('food', '') }}</textarea>
+
+    <div class="field-row">
+      <div><label class="field-label" for="servings">Approx. servings</label><input id="servings" name="servings" type="number" min="1" max="5000" required value="{{ form.get('servings', '') }}" placeholder="25"></div>
+      <div><label class="field-label" for="hours">Pickup within</label><select id="hours" name="hours">{% for hour in range(1, 25) %}<option value="{{ hour }}" {% if form.get('hours', '4')|int == hour %}selected{% endif %}>{{ hour }} hour{% if hour != 1 %}s{% endif %}</option>{% endfor %}</select></div>
+    </div>
+
+    <div class="form-section-title contact-title"><span>02</span><h2>Pickup details</h2></div>
+    <label class="field-label" for="area">Neighborhood</label>
+    <select id="area" name="area" required>
+      <option value="" disabled {% if not form.get('area') %}selected{% endif %}>Choose a neighborhood</option>
+      {% for name in areas %}<option value="{{ name }}" {% if form.get('area') == name %}selected{% endif %}>{{ name }}</option>{% endfor %}
+    </select>
+    <input type="hidden" name="lat" id="latitude" value="{{ form.get('lat', '') }}">
+    <input type="hidden" name="lng" id="longitude" value="{{ form.get('lng', '') }}">
+    <button class="location-button" type="button" data-location-button>Use my current location</button>
+    <p class="location-status" data-location-status aria-live="polite">Or choose a neighborhood above.</p>
+
+    <label class="field-label" for="address">Pickup address or instructions</label>
+    <input id="address" name="address" type="text" maxlength="200" value="{{ form.get('address', '') }}" placeholder="Street, landmark, or pickup point">
+    <label class="field-label" for="contact">Contact phone for pickup</label>
+    <input id="contact" name="contact" type="tel" autocomplete="tel" maxlength="40" value="{{ form.get('contact', '') }}" placeholder="A number the NGO can reach">
+    <button class="button button-dark form-submit" type="submit">Post donation <span aria-hidden="true">&#8594;</span></button>
+    <p class="form-footnote">Please only post food that's safe to collect and share.</p>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  const locationButton = document.querySelector('[data-location-button]');
+  const locationStatus = document.querySelector('[data-location-status]');
+  locationButton.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      locationStatus.textContent = 'Location is not available in this browser. Choose a neighborhood instead.';
+      return;
+    }
+    locationStatus.textContent = 'Finding your location…';
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+      document.querySelector('#latitude').value = coords.latitude;
+      document.querySelector('#longitude').value = coords.longitude;
+      document.querySelector('#area').required = false;
+      locationStatus.textContent = 'Location added. Your exact coordinates are used to sort nearby pickups.';
+    }, () => {
+      locationStatus.textContent = 'Could not get your location. Choose a neighborhood instead.';
+    }, { enableHighAccuracy: false, timeout: 10000 });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Find food nearby | Food Waste Matcher{% endblock %}
+{% block content %}
+<section class="find-heading">
+  <div><p class="eyebrow">FOR COMMUNITY ORGANIZATIONS</p><h1>Good food, <em>close by.</em></h1><p>Available donations, sorted by distance from {{ where }}.</p></div>
+  <form class="area-filter" method="get" action="{{ url_for('find') }}">
+    <label class="field-label" for="find-area">Your neighborhood</label>
+    <div class="filter-controls"><select id="find-area" name="area">{% for name in areas %}<option value="{{ name }}" {% if area == name %}selected{% endif %}>{{ name }}</option>{% endfor %}</select><button class="button button-dark" type="submit">Update</button><button class="location-button" type="button" data-find-location>Use location</button></div>
+    <p class="location-status" data-find-status aria-live="polite"></p>
+  </form>
+</section>
+<section class="find-layout">
+  <div class="results-column">
+    <div class="results-summary"><strong>{{ items|length }} available</strong><span>Sorted nearest first</span></div>
+    {% if items %}
+      <div class="results-list">
+        {% for item in items %}
+          <article class="result-item">
+            <div class="result-main">
+              <div class="listing-card-top"><span class="type-tag type-{{ item.donor_type }}">{{ types[item.donor_type] }}</span><span class="time-tag">{{ item.expires_at|time_left }}</span></div>
+              <h2>{{ item.food }}</h2>
+              <p class="listing-donor">{{ item.donor_name }} <span aria-hidden="true">·</span> {{ item.address }}</p>
+              <div class="result-meta"><span class="servings-mark">{{ item.servings }}</span><span>servings</span><span class="meta-divider"></span><strong>{{ '%.1f'|format(item.distance) }} km</strong><span>away</span></div>
+            </div>
+            <form class="claim-form" method="post" action="{{ url_for('claim', donation_id=item.id) }}">
+              <input type="hidden" name="back" value="{{ back }}">
+              <label class="field-label" for="ngo-{{ item.id }}">Claim for your organization</label>
+              <div class="claim-fields"><input id="ngo-{{ item.id }}" name="ngo_name" type="text" maxlength="120" required placeholder="NGO name"><input name="phone" type="tel" maxlength="40" required placeholder="Contact phone" aria-label="Contact phone for your organization"><button class="button button-coral" type="submit">Claim food</button></div>
+            </form>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state"><span class="empty-number">0</span><h2>Nothing listed nearby right now.</h2><p>Try a different neighborhood, or check back soon. New donations appear here as soon as they're posted.</p><a class="text-link" href="{{ url_for('donate') }}">Know a donor? Share this page <span aria-hidden="true">&#8594;</span></a></div>
+    {% endif %}
+  </div>
+  <aside class="map-column"><div class="map-caption"><span class="map-dot"></span><span>DONATIONS AROUND {{ where|upper }}</span></div><div class="map-frame">{{ map_html|safe }}</div><p class="map-note">Distances are approximate. Confirm pickup details directly with the donor.</p></aside>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+  const findLocationButton = document.querySelector('[data-find-location]');
+  findLocationButton.addEventListener('click', () => {
+    const status = document.querySelector('[data-find-status]');
+    if (!navigator.geolocation) {
+      status.textContent = 'Location is not available in this browser.';
+      return;
+    }
+    status.textContent = 'Finding your location…';
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+      const params = new URLSearchParams({ lat: coords.latitude, lng: coords.longitude });
+      window.location.assign(`{{ url_for('find') }}?${params}`);
+    }, () => {
+      status.textContent = 'Could not get your location. Choose a neighborhood instead.';
+    }, { enableHighAccuracy: false, timeout: 10000 });
+  });
+</script>
+{% endblock %}

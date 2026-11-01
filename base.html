@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7f1">
+  <title>{% block title %}Food Waste Matcher{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="{{ url_for('index') }}" aria-label="Food Waste Matcher home">
+      <span class="brand-mark" aria-hidden="true">FW</span>
+      <span>Food Waste Matcher</span>
+    </a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <a href="{{ url_for('find') }}">Find food</a>
+      <a class="nav-donate" href="{{ url_for('donate') }}">Post a donation <span aria-hidden="true">+</span></a>
+    </nav>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack" role="status" aria-live="polite">
+          {% for category, message in messages %}
+            <p class="flash flash-{{ category }}">{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <a class="wordmark footer-mark" href="{{ url_for('index') }}"><span class="brand-mark" aria-hidden="true">FW</span><span>Food Waste Matcher</span></a>
+    <p>Good food deserves a good next stop.</p>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
